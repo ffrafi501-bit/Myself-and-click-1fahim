@@ -11,8 +11,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     
-    <!-- Add your MoniTag script tags here -->
-    <script src='//libtl.com/sdk.js' data-zone='9796590' data-sdk='show_9796590'></script>
+    <!-- Your MoniTag Zone IDs are correctly placed here -->
+    <script src='//libtl.com/sdk.js' data-zone='10033704' data-sdk='show_10033704'></script>
     <script src='//libtl.com/sdk.js' data-zone='10103622' data-sdk='show_10103622'></script>
     <script src='//libtl.com/sdk.js' data-zone='10103569' data-sdk='show_10103569'></script>
     <script src='//libtl.com/sdk.js' data-zone='10103627' data-sdk='show_10103627'></script>
@@ -95,7 +95,6 @@
 
         <div class="card" id="network-card">
             <h4><i class="fas fa-wifi"></i> Network Information</h4>
-            <!-- Grid for displaying network info -->
             <div class="network-info-grid" id="network-info-grid">
                 <div class="info-item"><i class="fas fa-network-wired"></i> <span id="ip-address">Loading...</span></div>
                 <div class="info-item"><i class="fas fa-signal"></i> <span id="connection-type">Loading...</span></div>
@@ -104,7 +103,6 @@
                 <div class="info-item" style="grid-column: 1 / -1;"><i class="fas fa-bullseye"></i> <span id="active-zone">Loading...</span></div>
                 <div class="info-item" style="grid-column: 1 / -1;"><i class="fas fa-broadcast-tower"></i> <span id="isp">Loading...</span></div>
             </div>
-            <!-- Retry button, hidden by default -->
             <button class="btn manual-btn" id="retry-btn" style="display: none; margin-top: 15px;">
                 <i class="fas fa-sync-alt"></i> Retry Connection
             </button>
@@ -126,9 +124,9 @@
             const isTaskOn = true;
             const MAX_VIDEO_ADS = 50;
             const MAX_WEB_VISITS = 50;
-            const BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'; 
-            const ADMIN_CHAT_ID = 'YOUR_ADMIN_CHAT_ID_HERE';
-            const adZoneIds = ['YOUR_ZONE_ID_1', 'YOUR_ZONE_ID_2', 'ETC'];
+            const BOT_TOKEN = '8073679681:AAEVL3KwJYdHkznDnaF0638mG3iq150wDfQ'; 
+            const ADMIN_CHAT_ID = '6840260543';
+            const adZoneIds = ['10033704', '10103622', '10103569', '10103627', '10103633'];
             const AD_LOAD_TIMEOUT = 15000;
 
             // --- State and Elements ---
@@ -156,9 +154,7 @@
             function saveData() { localStorage.setItem('proCrazyAppDataV2', JSON.stringify(appData)); }
             function loadData() { const savedData = localStorage.getItem('proCrazyAppDataV2'); if (savedData) appData = JSON.parse(savedData); }
             
-            // === MODIFIED: This function is now more robust and includes a failure state with a retry button ===
             async function fetchNetworkAndLocationInfo() {
-                // Show loading state and hide retry button
                 elements.networkInfoGrid.style.display = 'grid';
                 elements.retryBtn.style.display = 'none';
                 elements.ipAddress.textContent = "Loading...";
@@ -186,19 +182,16 @@
                     handleNewIP();
                 } catch (error) {
                     console.error('Failed to fetch IP/Location:', error);
-                    // On failure, hide the info grid and show the retry button
                     elements.networkInfoGrid.style.display = 'none';
                     elements.retryBtn.style.display = 'block';
-                    // Set a placeholder IP so the app can still function
                     userIP = "unknown_ip";
                 }
             }
             
             async function getLocationFromIP(ip) { try { const response = await fetch(`https://ipapi.co/${ip}/json/`); const data = await response.json(); if (data.error) throw new Error(data.reason); return { country: data.country_name || 'N/A', region: data.region || 'N/A', isp: data.org || 'N/A' }; } catch (error) { console.error('Location fetch failed:', error); return { country: 'Unknown', region: 'Unknown', isp: 'Unknown' }; } }
             
-            // === MODIFIED: Prevents "New IP" alert when IP fetch fails ===
             function handleNewIP() {
-                if (userIP === 'unknown_ip') return; // Do nothing if IP is unknown
+                if (userIP === 'unknown_ip') return;
                 let currentIpData = appData.ipHistory.find(ip => ip.ip === userIP); if (!currentIpData) { currentIpData = { ip: userIP, clicks: 0, visitCount: 1 }; appData.ipHistory.unshift(currentIpData); if (appData.ipHistory.length > 10) appData.ipHistory.pop(); appData.videoAdCount = 0; appData.webVisitCount = 0; tg.HapticFeedback.notificationOccurred('success'); tg.showAlert('New IP Detected! Tasks have been reset.'); } else { currentIpData.visitCount++; } currentIpData.lastSeen = Date.now(); saveData();
             }
             function recordClick() { let ipData = appData.ipHistory.find(ip => ip.ip === userIP); if (!ipData) { ipData = { ip: userIP, clicks: 0, visitCount: 1 }; appData.ipHistory.unshift(ipData); } ipData.clicks++; const today = new Date().toISOString().split('T')[0]; let todayEntry = appData.clickHistory.find(entry => entry.date === today); if (todayEntry) todayEntry.clicks++; else appData.clickHistory.push({ date: today, clicks: 1 }); saveData(); }
@@ -243,7 +236,7 @@
                 elements.webVisitBtn.addEventListener('click', () => handleManualAdClick('web'));
                 elements.resetDataBtn.addEventListener('click', handleResetData);
                 elements.sendReportBtn.addEventListener('click', handleSendReport);
-                elements.retryBtn.addEventListener('click', fetchNetworkAndLocationInfo); // Listener for the retry button
+                elements.retryBtn.addEventListener('click', fetchNetworkAndLocationInfo);
             }
 
             async function handleManualAdClick(type) {
@@ -272,7 +265,7 @@
 
             // --- UI and Other Helpers ---
             function handleResetData() { tg.showConfirm("Are you sure?", (c) => { if(c) { localStorage.removeItem('proCrazyAppDataV2'); location.reload(); }}); }
-            function handleSendReport() { if (BOT_TOKEN === 'YOUR_BOT_TOKEN_HERE' || ADMIN_CHAT_ID === 'YOUR_ADMIN_CHAT_ID_HERE') { tg.showAlert("Bot/Admin not configured."); return; } const user = tg.initDataUnsafe?.user; const name = user ? `${user.first_name || ''} ${user.last_name || ''} (ID: ${user.id})`.trim() : 'Guest'; const reportString = `--- Status Report ---\n\n👤 User: ${name}\n🌐 IP: ${userIP}\n📈 Clicks (Today): ${elements.todayClicks.innerText}\n📅 Clicks (Week): ${elements.weekClicks.innerText}\n🗓️ Clicks (Total): ${elements.totalClicks.innerText}\n📹 Video Ads: ${appData.videoAdCount}/${MAX_VIDEO_ADS}\n🔗 Web Visits: ${appData.webVisitCount}/${MAX_WEB_VISITS}`; const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${ADMIN_CHAT_ID}&text=${encodeURIComponent(reportString)}`; fetch(url).then(res => res.json()).then(data => { if (data.ok) tg.showAlert("Report sent."); else tg.showAlert(`Failed: ${data.description}`); }).catch(error => tg.showAlert("Network error.")); }
+            function handleSendReport() { if (BOT_TOKEN === 'YOUR_BOT_TOKEN' || ADMIN_CHAT_ID === 'YOUR_ADMIN_ID') { tg.showAlert("Bot/Admin not configured."); return; } const user = tg.initDataUnsafe?.user; const name = user ? `${user.first_name || ''} ${user.last_name || ''} (ID: ${user.id})`.trim() : 'Guest'; const reportString = `--- Status Report ---\n\n👤 User: ${name}\n🌐 IP: ${userIP}\n📈 Clicks (Today): ${elements.todayClicks.innerText}\n📅 Clicks (Week): ${elements.weekClicks.innerText}\n🗓️ Clicks (Total): ${elements.totalClicks.innerText}\n📹 Video Ads: ${appData.videoAdCount}/${MAX_VIDEO_ADS}\n🔗 Web Visits: ${appData.webVisitCount}/${MAX_WEB_VISITS}`; const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${ADMIN_CHAT_ID}&text=${encodeURIComponent(reportString)}`; fetch(url).then(res => res.json()).then(data => { if (data.ok) tg.showAlert("Report sent."); else tg.showAlert(`Failed: ${data.description}`); }).catch(error => tg.showAlert("Network error.")); }
             function applyCrazyAnimations() { gsap.from(".card", { duration: 0.8, opacity: 0, y: 50, stagger: 0.1, ease: "power3.out" }); }
             function setupUserInfo() { const user = tg.initDataUnsafe?.user; if (user && user.id) { elements.userName.textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim(); elements.profilePic.innerHTML = user.photo_url ? `<img src="${user.photo_url}" alt="Profile" class="profile-pic">` : `<div class="profile-pic icon"><i class="fas fa-user"></i></div>`; } else { elements.userName.textContent = 'Guest User'; elements.profilePic.innerHTML = `<div class="profile-pic icon"><i class="fas fa-user-secret"></i></div>`; } }
             function updateAdButtonUI() {
@@ -291,14 +284,12 @@
             function updateIpHistoryUI() { elements.ipHistoryList.innerHTML = ''; appData.ipHistory.forEach(ip => { const li = document.createElement('li'); let c = 'ip-green'; if (ip.visitCount === 2) c = 'ip-yellow'; else if (ip.visitCount > 2) c = 'ip-red'; li.className = c; li.innerHTML = `<span>${ip.ip}</span> <span>${ip.clicks} Clicks</span>`; elements.ipHistoryList.appendChild(li); }); }
             let clickChartInstance; function updateChart() { const canvas = document.getElementById('click-chart'); if (!canvas) return; const ctx = canvas.getContext('2d'); const labels = []; const dataPoints = []; for (let i = 29; i >= 0; i--) { const date = new Date(); date.setDate(date.getDate() - i); const dateStr = date.toISOString().split('T')[0]; labels.push(date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })); const dayData = appData.clickHistory.find(d => d.date === dateStr); dataPoints.push(dayData ? dayData.clicks : 0); } if (clickChartInstance) { clickChartInstance.data.labels = labels; clickChartInstance.data.datasets[0].data = dataPoints; clickChartInstance.update(); } else { clickChartInstance = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Daily Clicks', data: dataPoints, borderColor: 'rgba(233, 69, 96, 1)', backgroundColor: 'rgba(233, 69, 96, 0.2)', fill: true, tension: 0.4 }] }, options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.7)' } }, x: { ticks: { color: 'rgba(255,255,255,0.7)' } } }, plugins: { legend: { labels: { color: 'rgba(255,255,255,0.9)' } } } } }); } }
             function updateActiveZoneUI() {
-                if (adZoneIds.length === 0 || adZoneIds[0].includes('YOUR_')) { document.getElementById('active-zone').textContent = 'Not Configured'; return; }
                 const totalClicksForRotation = appData.clickRotationCounter || 0;
                 const zoneIndex = Math.floor(totalClicksForRotation / 10) % adZoneIds.length;
                 const zoneNumber = zoneIndex + 1;
                 document.getElementById('active-zone').textContent = `Active Zone: #${zoneNumber}`;
             }
             function updateClicksToNextZoneUI() {
-                if (adZoneIds.length === 0 || adZoneIds[0].includes('YOUR_')) { document.getElementById('clicks-to-next-zone').textContent = ''; return; }
                 const totalClicksForRotation = appData.clickRotationCounter || 0;
                 const clicksInCurrentCycle = totalClicksForRotation % 10;
                 const clicksRemaining = 10 - clicksInCurrentCycle;
