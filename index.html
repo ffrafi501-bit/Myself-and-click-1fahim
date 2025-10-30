@@ -19,7 +19,7 @@
     <script src='//libtl.com/sdk.js' data-zone='10103633' data-sdk='show_10103633'></script>
 
     <style>
-        /* CSS styles remain unchanged */
+        /* CSS styles are complete and require no changes */
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
         :root {
             --bg-gradient: linear-gradient(135deg, #121212, #1a1a2e); --primary-color: rgba(44, 44, 64, 0.7);
@@ -120,17 +120,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             const tg = window.Telegram.WebApp;
             
-            // --- Configuration ---
+            // --- Configuration Section (All your details are set) ---
             const isTaskOn = true;
             const MAX_VIDEO_ADS = 50;
             const MAX_WEB_VISITS = 50;
             const BOT_TOKEN = '8073679681:AAEVL3KwJYdHkznDnaF0638mG3iq150wDfQ'; 
             const ADMIN_CHAT_ID = '6840260543';
             const adZoneIds = ['10033704', '10103622', '10103569', '10103627', '10103633'];
-            const AD_LOAD_TIMEOUT = 15000;
+            const AD_LOAD_TIMEOUT = 15000; // 15 seconds
 
-            // --- State and Elements ---
-            let userIP = '...';
+            // --- State and Elements (No changes needed here) ---
+            let userIP = 'unknown_ip';
             let appData = { ipHistory: [], clickHistory: [], videoAdCount: 0, webVisitCount: 0, clickRotationCounter: 0 };
             const elements = {
                 userName: document.getElementById('user-name'), profilePic: document.getElementById('profile-pic-container'), ipAddress: document.getElementById('ip-address'), connectionType: document.getElementById('connection-type'), country: document.getElementById('country'), region: document.getElementById('region'), isp: document.getElementById('isp'), todayClicks: document.getElementById('today-clicks'), weekClicks: document.getElementById('week-clicks'), monthClicks: document.getElementById('month-clicks'), totalClicks: document.getElementById('total-clicks'), videoAdBtn: document.getElementById('video-ad-btn'), webVisitBtn: document.getElementById('web-visit-btn'),
@@ -140,14 +140,16 @@
             };
 
             // --- Initialization ---
-            async function initializeApp() {
+            function initializeApp() {
                 tg.ready(); tg.expand(); tg.enableClosingConfirmation();
                 loadData();
                 setupUserInfo();
-                await fetchNetworkAndLocationInfo();
                 updateAllUI();
                 setupEventListeners();
                 applyCrazyAnimations();
+                setTimeout(() => {
+                    fetchNetworkAndLocationInfo();
+                }, 1000);
             }
 
             // --- Data Handling ---
@@ -157,8 +159,8 @@
             async function fetchNetworkAndLocationInfo() {
                 elements.networkInfoGrid.style.display = 'grid';
                 elements.retryBtn.style.display = 'none';
-                elements.ipAddress.textContent = "Loading...";
-                elements.connectionType.textContent = "Loading...";
+                elements.ipAddress.textContent = "Fetching...";
+                elements.connectionType.textContent = "Fetching...";
                 
                 try {
                     const ipResponse = await fetch('https://api.ipify.org?format=json');
@@ -212,12 +214,11 @@
                 tg.HapticFeedback.impactOccurred('light');
                 
                 const adPromise = new Promise((resolve, reject) => {
-                    const adFunctionName = 'show_' + zoneId;
-                    if (typeof window[adFunctionName] === 'function') {
-                        const adFunction = type === 'video' ? window[adFunctionName] : () => window[adFunctionName]('pop');
+                    if (typeof window['show_' + zoneId] === 'function') {
+                        const adFunction = type === 'video' ? window['show_' + zoneId] : () => window['show_' + zoneId]('pop');
                         adFunction().then(() => { resolve(); }).catch((err) => { reject(err); });
                     } else {
-                        reject(new Error(`Ad function '${adFunctionName}' not found.`));
+                        reject(new Error(`Ad function for zone '${zoneId}' is not ready or failed to load.`));
                     }
                 });
 
@@ -256,6 +257,7 @@
                     onAdSuccess();
                 } catch (error) { 
                     onAdError(error); 
+                    tg.showAlert(error.message);
                 } 
                 finally { 
                     btn.innerHTML = originalHTML; 
@@ -265,7 +267,7 @@
 
             // --- UI and Other Helpers ---
             function handleResetData() { tg.showConfirm("Are you sure?", (c) => { if(c) { localStorage.removeItem('proCrazyAppDataV2'); location.reload(); }}); }
-            function handleSendReport() { if (BOT_TOKEN === 'YOUR_BOT_TOKEN' || ADMIN_CHAT_ID === 'YOUR_ADMIN_ID') { tg.showAlert("Bot/Admin not configured."); return; } const user = tg.initDataUnsafe?.user; const name = user ? `${user.first_name || ''} ${user.last_name || ''} (ID: ${user.id})`.trim() : 'Guest'; const reportString = `--- Status Report ---\n\n👤 User: ${name}\n🌐 IP: ${userIP}\n📈 Clicks (Today): ${elements.todayClicks.innerText}\n📅 Clicks (Week): ${elements.weekClicks.innerText}\n🗓️ Clicks (Total): ${elements.totalClicks.innerText}\n📹 Video Ads: ${appData.videoAdCount}/${MAX_VIDEO_ADS}\n🔗 Web Visits: ${appData.webVisitCount}/${MAX_WEB_VISITS}`; const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${ADMIN_CHAT_ID}&text=${encodeURIComponent(reportString)}`; fetch(url).then(res => res.json()).then(data => { if (data.ok) tg.showAlert("Report sent."); else tg.showAlert(`Failed: ${data.description}`); }).catch(error => tg.showAlert("Network error.")); }
+            function handleSendReport() { if (BOT_TOKEN === '8073679681:AAEVL3KwJYdHkznDnaF0638mG3iq150wDfQ' || ADMIN_CHAT_ID === '6840260543') { tg.showAlert("Bot/Admin not configured."); return; } const user = tg.initDataUnsafe?.user; const name = user ? `${user.first_name || ''} ${user.last_name || ''} (ID: ${user.id})`.trim() : 'Guest'; const reportString = `--- Status Report ---\n\n👤 User: ${name}\n🌐 IP: ${userIP}\n📈 Clicks (Today): ${elements.todayClicks.innerText}\n📅 Clicks (Week): ${elements.weekClicks.innerText}\n🗓️ Clicks (Total): ${elements.totalClicks.innerText}\n📹 Video Ads: ${appData.videoAdCount}/${MAX_VIDEO_ADS}\n🔗 Web Visits: ${appData.webVisitCount}/${MAX_WEB_VISITS}`; const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${ADMIN_CHAT_ID}&text=${encodeURIComponent(reportString)}`; fetch(url).then(res => res.json()).then(data => { if (data.ok) tg.showAlert("Report sent."); else tg.showAlert(`Failed: ${data.description}`); }).catch(error => tg.showAlert("Network error.")); }
             function applyCrazyAnimations() { gsap.from(".card", { duration: 0.8, opacity: 0, y: 50, stagger: 0.1, ease: "power3.out" }); }
             function setupUserInfo() { const user = tg.initDataUnsafe?.user; if (user && user.id) { elements.userName.textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim(); elements.profilePic.innerHTML = user.photo_url ? `<img src="${user.photo_url}" alt="Profile" class="profile-pic">` : `<div class="profile-pic icon"><i class="fas fa-user"></i></div>`; } else { elements.userName.textContent = 'Guest User'; elements.profilePic.innerHTML = `<div class="profile-pic icon"><i class="fas fa-user-secret"></i></div>`; } }
             function updateAdButtonUI() {
