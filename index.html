@@ -248,7 +248,7 @@
                 btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`;
                 try {
                     const totalClicksForRotation = appData.clickRotationCounter || 0;
-                    const zoneIndex = Math.floor(totalClicksForRotation / 10) % adZoneIds.length;
+                    const zoneIndex = Math.floor(totalClicksForRotation / 5) % adZoneIds.length;
                     const currentZoneId = adZoneIds[zoneIndex];
                     
                     await showSingleAd(type, currentZoneId);
