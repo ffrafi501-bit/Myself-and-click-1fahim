@@ -11,12 +11,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     
-    <!-- Your MoniTag Zone IDs are correctly placed here -->
+    <!-- Your 7 MoniTag Zone IDs are correctly placed here -->
     <script src='//libtl.com/sdk.js' data-zone='10033704' data-sdk='show_10033704'></script>
     <script src='//libtl.com/sdk.js' data-zone='10103622' data-sdk='show_10103622'></script>
     <script src='//libtl.com/sdk.js' data-zone='10103569' data-sdk='show_10103569'></script>
     <script src='//libtl.com/sdk.js' data-zone='10103627' data-sdk='show_10103627'></script>
     <script src='//libtl.com/sdk.js' data-zone='10103633' data-sdk='show_10103633'></script>
+    <script src='//libtl.com/sdk.js' data-zone='9796590' data-sdk='show_9796590'></script>
+    <script src='//libtl.com/sdk.js' data-zone='9973858' data-sdk='show_9973858'></script>
 
     <style>
         /* CSS styles are complete and require no changes */
@@ -100,7 +102,8 @@
                 <div class="info-item"><i class="fas fa-signal"></i> <span id="connection-type">Loading...</span></div>
                 <div class="info-item"><i class="fas fa-flag"></i> <span id="country">Loading...</span></div>
                 <div class="info-item"><i class="fas fa-map-marker-alt"></i> <span id="region">Loading...</span></div>
-                <div class="info-item" style="grid-column: 1 / -1;"><i class="fas fa-bullseye"></i> <span id="active-zone">Loading...</span></div>
+                <div class="info-item"><i class="fas fa-hashtag"></i> <span id="active-zone-number">Loading...</span></div>
+                <div class="info-item"><i class="fas fa-key"></i> <span id="active-zone-id">Loading...</span></div>
                 <div class="info-item" style="grid-column: 1 / -1;"><i class="fas fa-broadcast-tower"></i> <span id="isp">Loading...</span></div>
             </div>
             <button class="btn manual-btn" id="retry-btn" style="display: none; margin-top: 15px;">
@@ -120,23 +123,31 @@
         document.addEventListener('DOMContentLoaded', () => {
             const tg = window.Telegram.WebApp;
             
-            // --- Configuration Section (All your details are set) ---
-            const isTaskOn = true;
-            const MAX_VIDEO_ADS = 25;
-            const MAX_WEB_VISITS = 25;
+            // --- Configuration Section ---
             const BOT_TOKEN = '8073679681:AAEVL3KwJYdHkznDnaF0638mG3iq150wDfQ'; 
             const ADMIN_CHAT_ID = '6840260543';
-            const adZoneIds = ['10033704', '10103622', '10103569', '10103627', '10103633'];
-            const AD_LOAD_TIMEOUT = 15000; // 15 seconds
+            
+            const adZoneIds = [
+                '10033704', '10103622', '10103569', '10103627', 
+                '10103633', '9796590',  '9973858'
+            ];
 
-            // --- State and Elements (No changes needed here) ---
+            const CLICKS_PER_ZONE = 3;
+            const isTaskOn = true;
+            const MAX_VIDEO_ADS = 21;
+            const MAX_WEB_VISITS = 21;
+            const AD_LOAD_TIMEOUT = 15000;
+
+            // --- State and Elements ---
             let userIP = 'unknown_ip';
             let appData = { ipHistory: [], clickHistory: [], videoAdCount: 0, webVisitCount: 0, clickRotationCounter: 0 };
             const elements = {
                 userName: document.getElementById('user-name'), profilePic: document.getElementById('profile-pic-container'), ipAddress: document.getElementById('ip-address'), connectionType: document.getElementById('connection-type'), country: document.getElementById('country'), region: document.getElementById('region'), isp: document.getElementById('isp'), todayClicks: document.getElementById('today-clicks'), weekClicks: document.getElementById('week-clicks'), monthClicks: document.getElementById('month-clicks'), totalClicks: document.getElementById('total-clicks'), videoAdBtn: document.getElementById('video-ad-btn'), webVisitBtn: document.getElementById('web-visit-btn'),
                 ipHistoryList: document.getElementById('ip-history-list'), resetDataBtn: document.getElementById('reset-data-btn'), sendReportBtn: document.getElementById('send-report-btn'), clickSound: document.getElementById('click-sound'),
                 retryBtn: document.getElementById('retry-btn'),
-                networkInfoGrid: document.getElementById('network-info-grid')
+                networkInfoGrid: document.getElementById('network-info-grid'),
+                activeZoneNumber: document.getElementById('active-zone-number'),
+                activeZoneId: document.getElementById('active-zone-id'),
             };
 
             // --- Initialization ---
@@ -167,7 +178,6 @@
                     const ipData = await ipResponse.json();
                     userIP = ipData.ip;
                     elements.ipAddress.textContent = userIP;
-
                     const connection = navigator.connection;
                     if (connection && connection.type === 'wifi') {
                         elements.connectionType.textContent = 'Wi-Fi';
@@ -176,7 +186,6 @@
                     } else {
                         elements.connectionType.textContent = 'Wi-Fi';
                     }
-
                     const locationInfo = await getLocationFromIP(userIP);
                     elements.country.textContent = locationInfo.country;
                     elements.region.textContent = locationInfo.region;
@@ -218,13 +227,13 @@
                         const adFunction = type === 'video' ? window['show_' + zoneId] : () => window['show_' + zoneId]('pop');
                         adFunction().then(() => { resolve(); }).catch((err) => { reject(err); });
                     } else {
-                        reject(new Error(`Ad function for zone '${zoneId}' is not ready or failed to load.`));
+                        reject(new Error(`Ad function for zone '${zoneId}' is not ready.`));
                     }
                 });
 
                 const timeoutPromise = new Promise((_, reject) => {
                     setTimeout(() => {
-                        reject(new Error(`Ad timed out after ${AD_LOAD_TIMEOUT / 1000} seconds.`));
+                        reject(new Error(`Ad timed out.`));
                     }, AD_LOAD_TIMEOUT);
                 });
 
@@ -248,7 +257,7 @@
                 btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`;
                 try {
                     const totalClicksForRotation = appData.clickRotationCounter || 0;
-                    const zoneIndex = Math.floor(totalClicksForRotation / 5) % adZoneIds.length;
+                    const zoneIndex = Math.floor(totalClicksForRotation / CLICKS_PER_ZONE) % adZoneIds.length;
                     const currentZoneId = adZoneIds[zoneIndex];
                     
                     await showSingleAd(type, currentZoneId);
@@ -285,24 +294,29 @@
             function updateStatsUI() { const now = new Date(); const todayStr = now.toISOString().split('T')[0]; const todayClicks = appData.clickHistory.find(d => d.date === todayStr)?.clicks || 0; const getClicksSince = (days) => appData.clickHistory.filter(d => (now - new Date(d.date)) / (1000 * 60 * 60 * 24) < days).reduce((s, d) => s + d.clicks, 0); const totalClicks = appData.clickHistory.reduce((s, d) => s + d.clicks, 0); gsap.to(elements.todayClicks, { duration: 0.5, innerText: todayClicks, snap: { innerText: 1 } }); gsap.to(elements.weekClicks, { duration: 0.5, innerText: getClicksSince(7), snap: { innerText: 1 } }); gsap.to(elements.monthClicks, { duration: 0.5, innerText: getClicksSince(30), snap: { innerText: 1 } }); gsap.to(elements.totalClicks, { duration: 0.5, innerText: totalClicks, snap: { innerText: 1 } }); }
             function updateIpHistoryUI() { elements.ipHistoryList.innerHTML = ''; appData.ipHistory.forEach(ip => { const li = document.createElement('li'); let c = 'ip-green'; if (ip.visitCount === 2) c = 'ip-yellow'; else if (ip.visitCount > 2) c = 'ip-red'; li.className = c; li.innerHTML = `<span>${ip.ip}</span> <span>${ip.clicks} Clicks</span>`; elements.ipHistoryList.appendChild(li); }); }
             let clickChartInstance; function updateChart() { const canvas = document.getElementById('click-chart'); if (!canvas) return; const ctx = canvas.getContext('2d'); const labels = []; const dataPoints = []; for (let i = 29; i >= 0; i--) { const date = new Date(); date.setDate(date.getDate() - i); const dateStr = date.toISOString().split('T')[0]; labels.push(date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })); const dayData = appData.clickHistory.find(d => d.date === dateStr); dataPoints.push(dayData ? dayData.clicks : 0); } if (clickChartInstance) { clickChartInstance.data.labels = labels; clickChartInstance.data.datasets[0].data = dataPoints; clickChartInstance.update(); } else { clickChartInstance = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Daily Clicks', data: dataPoints, borderColor: 'rgba(233, 69, 96, 1)', backgroundColor: 'rgba(233, 69, 96, 0.2)', fill: true, tension: 0.4 }] }, options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.7)' } }, x: { ticks: { color: 'rgba(255,255,255,0.7)' } } }, plugins: { legend: { labels: { color: 'rgba(255,255,255,0.9)' } } } } }); } }
-            function updateActiveZoneUI() {
+            
+            function updateActiveZoneInfoUI() {
                 const totalClicksForRotation = appData.clickRotationCounter || 0;
-                const zoneIndex = Math.floor(totalClicksForRotation / 10) % adZoneIds.length;
+                const zoneIndex = Math.floor(totalClicksForRotation / CLICKS_PER_ZONE) % adZoneIds.length;
                 const zoneNumber = zoneIndex + 1;
-                document.getElementById('active-zone').textContent = `Active Zone: #${zoneNumber}`;
+                const currentZoneId = adZoneIds[zoneIndex];
+                elements.activeZoneNumber.textContent = `Zone #${zoneNumber} of ${adZoneIds.length}`;
+                elements.activeZoneId.textContent = `ID: ${currentZoneId}`;
             }
+
             function updateClicksToNextZoneUI() {
                 const totalClicksForRotation = appData.clickRotationCounter || 0;
-                const clicksInCurrentCycle = totalClicksForRotation % 10;
-                const clicksRemaining = 10 - clicksInCurrentCycle;
+                const clicksInCurrentCycle = totalClicksForRotation % CLICKS_PER_ZONE;
+                const clicksRemaining = CLICKS_PER_ZONE - clicksInCurrentCycle;
                 document.getElementById('clicks-to-next-zone').textContent = `Next zone in ${clicksRemaining} clicks`;
             }
+
             function updateAllUI() {
                 updateStatsUI();
                 updateIpHistoryUI();
                 updateAdButtonUI();
                 updateChart();
-                updateActiveZoneUI();
+                updateActiveZoneInfoUI();
                 updateClicksToNextZoneUI();
             }
             // --- Start App ---
